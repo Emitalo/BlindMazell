@@ -41,11 +41,38 @@ data Player =  Player {name :: String, bag :: [Key], curMaze :: Maze}
 createPlayer :: String -> Maze -> Player
 createPlayer name maze = Player name [] maze
 
---isKey ObjectKey _ = True 
+isKey :: Object -> Bool
+isKey obj = 
+	case obj of
+		ObjectKey {} -> True
+		otherwise -> False
 
---walkLeft :: Player -> Maybe Player
---walkLeft (Player name bag (Ambience obj father left right)) = 
-	
+isDoor :: Object -> Bool
+isDoor obj = 
+	case obj of
+		ObjectDoor {} -> True
+		otherwise -> False
+
+playerHasDoorKey :: Player -> Door -> Bool
+playerHasDoorKey player door 
+	| bag player == []  = False
+	| head(bag player) == doorKey door = True
+	| otherwise = playerHasDoorKey (Player (name player) (tail(bag player)) (curMaze player)) door
+
+addToPlayerBag :: Player -> Key -> [Key]
+addToPlayerBag player key = key : (bag player)
+
+walkLeft :: Player -> (Player, String)
+walkLeft player
+	| leftMaze == NoExit = (player, "Nada a esquerda")
+	| curMazeObj == NoObject = ((Player (name player) (bag player) leftMaze), "Voce foi para a esquerda")
+	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player (objectKey curMazeObj)) leftMaze), "Voce pegou uma chave")
+	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) leftMaze), "Voce abriu a porta e foi para a esquerda")
+	| otherwise = (player, "Tem um porta aqui e voce nao tem a chave dessa porta.")
+	where 
+		curMazeObj = object (left (curMaze player))
+		leftMaze = left (curMaze player)
+
 k = createKey 10
 k2 = createKey 5
 d = createDoor k
@@ -63,6 +90,3 @@ maze2 = addFirstLeft maze1 on
 maze3 = addFirstLeft maze2 od
 
 player = createPlayer "Emilinda" maze3
-
-t = father maze3
-u = father (Ambience NoObject maze3 NoExit NoExit)

@@ -8,7 +8,7 @@ data Key = Null | Key {key :: Integer}
 createKey :: Integer -> Key
 createKey key = Key key
 
-data Door = EmptyDoor | Door Key 
+data Door = EmptyDoor | Door {doorKey :: Key} 
 	deriving (Show, Ord, Eq)
 
 createDoor :: Key -> Door
@@ -21,7 +21,7 @@ openDoor (Door dk) key
 	| dk == key = True
 	| otherwise = False
 
-data Object = NoObject | ObjectDoor Door | ObjectKey Key
+data Object = NoObject | ObjectDoor {objectDoor :: Door} | ObjectKey {objectKey :: Key}
 	deriving (Show, Ord, Eq)
 
 data Maze = NoExit | MazeEnd | Ambience{ object :: Object, father :: Maze, left :: Maze, right :: Maze } 
@@ -35,7 +35,7 @@ addFirstLeft maze obj
 	| right maze == NoExit = Ambience (object maze) (father maze) (left maze) (Ambience obj maze NoExit NoExit)
 	| otherwise = Ambience (object maze) (father maze) (left maze) (addFirstLeft (right maze) obj)
 
-data Player =  Player String [Key] Maze 
+data Player =  Player {name :: String, bag :: [Key], curMaze :: Maze}
 	deriving (Show, Ord, Eq)
 
 createPlayer :: String -> Maze -> Player

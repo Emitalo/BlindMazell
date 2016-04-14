@@ -1,6 +1,8 @@
-module Maze(Key, Door, Object, Maze, createKey, createDoor, openDoor, addFirstLeft, createPlayer) where
+module Maze(Key, Door, Object, Maze, createKey, createDoor, openDoor, addFirstLeft) where
 
-data Key = Null | Key Integer
+import Data.Maybe
+
+data Key = Null | Key {key :: Integer}
 	deriving (Show, Ord, Eq)
 
 createKey :: Integer -> Key
@@ -22,26 +24,28 @@ openDoor (Door dk) key
 data Object = NoObject | ObjectDoor Door | ObjectKey Key
 	deriving (Show, Ord, Eq)
 
-data Maze = NoExit | Ambience Object Maze Maze Maze
+data Maze = NoExit | MazeEnd | Ambience{ object :: Object, father :: Maze, left :: Maze, right :: Maze } 
 	deriving (Show, Ord, Eq)
 
 addFirstLeft :: Maze -> Object -> Maze
 addFirstLeft NoExit obj = Ambience obj NoExit NoExit NoExit
-addFirstLeft (Ambience o father left right) obj
-	| left == NoExit = Ambience o father (Ambience obj f NoExit NoExit) right
-	| left /= NoExit && right /= NoExit = Ambience o father (addFirstLeft left obj) right
-	| right == NoExit = Ambience o father left (Ambience obj f NoExit NoExit)
-	| otherwise = Ambience o father left (addFirstLeft right obj)
-	where f = (Ambience o father left right)
+addFirstLeft maze obj
+	| left maze == NoExit = Ambience (object maze) (father maze) (Ambience obj maze NoExit NoExit) (right maze)
+	| left maze /= NoExit && right maze /= NoExit = Ambience (object maze) (father maze) (addFirstLeft (left maze) obj) (right maze)
+	| right maze == NoExit = Ambience (object maze) (father maze) (left maze) (Ambience obj maze NoExit NoExit)
+	| otherwise = Ambience (object maze) (father maze) (left maze) (addFirstLeft (right maze) obj)
 
-data Player =  String [Key] Maze 
+data Player =  Player String [Key] Maze 
 	deriving (Show, Ord, Eq)
 
---createPlayer :: String -> Key -> Maze -> Player
---createPlayer name list maze = name list maze
+createPlayer :: String -> Maze -> Player
+createPlayer name maze = Player name [] maze
 
---walk 
+--isKey ObjectKey _ = True 
 
+--walkLeft :: Player -> Maybe Player
+--walkLeft (Player name bag (Ambience obj father left right)) = 
+	
 k = createKey 10
 k2 = createKey 5
 d = createDoor k
@@ -57,3 +61,8 @@ maze = addFirstLeft NoExit on
 maze1 = addFirstLeft maze ok
 maze2 = addFirstLeft maze1 on
 maze3 = addFirstLeft maze2 od
+
+player = createPlayer "Emilinda" maze3
+
+t = father maze3
+u = father (Ambience NoObject maze3 NoExit NoExit)

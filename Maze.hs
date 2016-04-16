@@ -1,6 +1,5 @@
-module Maze(Key, Door, Object, Maze, createKey, createDoor, openDoor, addFirstLeft) where
-
-import Data.Maybe
+module Maze(Key, Door, Object (NoObject, ObjectDoor, ObjectKey, MazeEnd), Maze (NoExit), Player (Winner),
+	createKey, createDoor, openDoor, addFirstLeft, createPlayer, walkLeft, walkRight, printMaze) where
 
 data Key = Null | Key {key :: Integer}
 	deriving (Show, Ord, Eq)
@@ -21,7 +20,7 @@ openDoor (Door dk) key
 	| dk == key = True
 	| otherwise = False
 
-data Object = NoObject | ObjectDoor {objectDoor :: Door} | ObjectKey {objectKey :: Key}
+data Object = NoObject | ObjectDoor {objectDoor :: Door} | ObjectKey {objectKey :: Key} | MazeEnd
 	deriving (Show, Ord, Eq)
 
 isKey :: Object -> Bool
@@ -36,7 +35,21 @@ isDoor obj =
 		ObjectDoor {} -> True
 		otherwise -> False
 
-data Maze = NoExit | MazeEnd | Ambience{ object :: Object, father :: Maze, left :: Maze, right :: Maze } 
+isEnd :: Object -> Bool
+isEnd obj = 
+	case obj of
+		MazeEnd {} -> True
+		otherwise -> False
+
+toString :: Object -> String
+toString object = 
+	case object of
+		NoObject {} -> "NoObject"
+		ObjectKey {objectKey} -> "Key " ++ ( show (key objectKey))
+		ObjectDoor {objectDoor} -> "Door" ++ (show (doorKey objectDoor))
+		MazeEnd {} -> "END"
+
+data Maze = NoExit | Ambience{ object :: Object, father :: Maze, left :: Maze, right :: Maze } 
 	deriving (Show, Ord, Eq)
 
 addFirstLeft :: Maze -> Object -> Maze
@@ -47,12 +60,31 @@ addFirstLeft maze obj
 	| right maze == NoExit = Ambience (object maze) (father maze) (left maze) (Ambience obj maze NoExit NoExit)
 	| otherwise = Ambience (object maze) (father maze) (left maze) (addFirstLeft (right maze) obj)
 
-data Player =  Player {name :: String, bag :: [Key], curMaze :: Maze}
+identLevel :: Integer -> String 
+identLevel level 
+	| level == 1 = "\t"
+	| otherwise = "\t" ++ identLevel (level - 1)
+
+getMazeLevel :: Maze -> Integer
+getMazeLevel maze 
+	| maze == NoExit = 0
+	| otherwise = 1 + getMazeLevel (father maze)
+
+printMaze :: Maze -> IO ()
+printMaze NoExit = putStrLn "NoExit"
+printMaze maze = putStrLn (printMazeAux (father maze) maze)
+
+printMazeAux :: Maze -> Maze -> String
+printMazeAux f NoExit = "\n" ++ identLevel level ++ "|NoExit"
+	where level = ((getMazeLevel f) + 2)
+printMazeAux f maze = ("\n" ++ identLevel level ++ "|" ++ (toString (object maze))) ++ (printMazeAux (father maze) (left maze)) ++ (printMazeAux (father maze) (right maze))
+	where level = getMazeLevel maze
+
+data Player =  Player {name :: String, bag :: [Key], curMaze :: Maze} | Winner
 	deriving (Show, Ord, Eq)
 
 createPlayer :: String -> Maze -> Player
 createPlayer name maze = Player name [] maze
-
 
 playerHasDoorKey :: Player -> Door -> Bool
 playerHasDoorKey player door 
@@ -69,6 +101,7 @@ walkLeft player
 	| curMazeObj == NoObject = ((Player (name player) (bag player) leftMaze), "Voce foi para a esquerda")
 	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player (objectKey curMazeObj)) leftMaze), "Voce pegou uma chave")
 	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) leftMaze), "Voce abriu a porta e foi para a esquerda")
+	| isEnd curMazeObj = (Winner, "Você saiu do labirinto! Fim do jogo.")
 	| otherwise = (player, "Tem um porta aqui e voce nao tem a chave dessa porta.")
 	where 
 		curMazeObj = object (left (curMaze player))
@@ -80,30 +113,47 @@ walkRight player
 	| curMazeObj == NoObject = ((Player (name player) (bag player) rightMaze), "Voce foi para a direita")
 	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player (objectKey curMazeObj)) rightMaze), "Voce pegou uma chave")
 	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) rightMaze), "Voce abriu a porta e foi para a direita")
+	| isEnd curMazeObj = (Winner, "Você saiu do labirinto! Fim do jogo.")
 	| otherwise = (player, "Tem um porta aqui e voce nao tem a chave dessa porta.")
 	where 
 		curMazeObj = object (right (curMaze player))
 		rightMaze = right (curMaze player)
 
 
-k = createKey 10
-k2 = createKey 5
-d = createDoor k
+-- Creating scenario I
+--k = createKey 10
+--k2 = createKey 5
+--d = createDoor k
 
-ok = ObjectKey k
-od = ObjectDoor d
-on = NoObject
+---- Create objects
 
-r = openDoor d k
-r1 = openDoor d k2
+--k = createKey 10
+--k2 = createKey 5
+--d = createDoor k
+--d2 = createDoor k2
 
-maze = addFirstLeft NoExit on
-maze1 = addFirstLeft maze ok
-maze2 = addFirstLeft maze1 on
-maze3 = addFirstLeft maze2 od
+--ok = ObjectKey k
+--ok2 = ObjectKey k2
+--od = ObjectDoor d
+--od2 = ObjectDoor d2
+--on = NoObject
 
-player = createPlayer "Emilinda" maze3
+--r = openDoor d k
+--r1 = openDoor d k2
 
-player1 = walkLeft player
-player2 = walkRight (fst player1)
-player3 = walkLeft (fst player2)
+--maze = addFirstLeft NoExit on
+--maze1 = addFirstLeft maze ok
+--maze2 = addFirstLeft maze1 on
+--maze3 = addFirstLeft maze2 od
+--maze4 = addFirstLeft maze3 on
+--maze5 = addFirstLeft maze4 on
+--maze6 = addFirstLeft maze5 on
+--maze7 = addFirstLeft maze6 ok2
+--maze8 = addFirstLeft maze7 on
+--maze9 = addFirstLeft maze8 od2
+
+--player = createPlayer "Emilinda" maze3
+
+--player1 = walkLeft player
+--player2 = walkRight (fst player1)
+--player3 = walkLeft (fst player2)

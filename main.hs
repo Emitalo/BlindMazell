@@ -1,17 +1,16 @@
 import Maze(Key, Door, Object (NoObject, ObjectDoor, ObjectKey, MazeEnd, Hole, Bear, Sword, Flashlight), Maze (NoExit), Player (Winner, Loser),
-	createKey, createDoor, openDoor, addFirstLeft, createPlayer, walkLeft, walkRight, printMaze, addInRight, addInRightLeft, 
+	createKey, createDoor, addFirstLeft, createPlayer, walkLeft, walkRight, walkBack, printMaze, addInRight, addInRightLeft, 
 	playerHasAFlashlight, showNextSteps, showObjectInNextSteps, isSword, isKey, isDoor, isEnd, isBear, isHole, isFlashlight, deleteFlashlight)
 
---startPlay :: Player
+startPlay :: IO ()
 startPlay = do
 	let maze = createScenario
 	print "Ola jogador! Bem-vindo ao Mazell"
 	print "Insira o seu nome"
 	name <- getLine
 	let player = createPlayer name maze
-	printMaze maze
 	play player 
-	--print (player)
+	printMaze maze
 
 createScenario :: Maze
 createScenario = do
@@ -53,14 +52,15 @@ createScenario = do
 	let maze13 = addFirstLeft maze12 on
 	addFirstLeft maze13 MazeEnd
 
-data Option = OptionLeft | OptionRight | TurnOnFlashlight | InvalidOption
+data Option = OptionLeft {} | OptionRight {} | OptionBack {} | InvalidOption {} | TurnOnFlashlight
 
 createOption :: String -> Option
 createOption option 
 	| option == "a" || option == "A" = OptionLeft
 	| option == "d" || option == "D" = OptionRight
 	| option == "f" || option == "F" = TurnOnFlashlight
-	| otherwise = error "Opcao invalida"
+	| option == "s" || option == "S" = OptionBack
+	| otherwise = InvalidOption
 
 getFlashlight :: Player -> Option
 getFlashlight player 
@@ -106,12 +106,13 @@ showObjectInRightWithFlashLight player
 
 
 play :: Player -> IO()
-play Winner = putStrLn ""
+play Winner = putStrLn "Este e o labirinto que voce estava jogando"
 play Loser = putStrLn ""
 play player = do
 	putStrLn "\nComandos:\n"
 	putStrLn "a - andar para a esquerda"
 	putStrLn "d - andar para a direita"
+	putStrLn "s - voltar"
 	let opl = getFlashlight player
 	case opl of
 		TurnOnFlashlight -> putStrLn "f - ligar a lanterna"
@@ -121,14 +122,21 @@ play player = do
 	putStrLn "Pra onde deseja ir?"
 	option <- getLine
 	let op = createOption option
+	putStrLn "\ESC[2J"
 	case op of
-		OptionLeft -> putStrLn (snd (walkLeft player)) >> play (fst (walkLeft player))
-		OptionRight -> putStrLn (snd (walkRight player)) >> play (fst (walkRight player))
+		OptionLeft {}-> putStrLn walkLeftMessage >> play walkLeftPlayer
+		OptionRight {}-> putStrLn walkRightMessage >> play walkRightPlayer	
+		OptionBack {}-> putStrLn walkBackMessage >> play walkBackPlayer
 		TurnOnFlashlight ->  putStrLn ("\n" ++ objleft) >> putStrLn ("\n" ++ objright) >> play curPlayer
-		otherwise -> error "Opcao invalida"
+		otherwise -> putStrLn "\nOpcao invalida" >> play player
 		where
 			objleft = showObjectInLeftWithFlashLight player
 			objright = showObjectInRightWithFlashLight player
 			curPlayer = deleteFlashlight player
-
+			walkLeftMessage = "\n" ++ snd (walkLeft player)
+			walkLeftPlayer = fst (walkLeft player)
+			walkRightMessage = "\n" ++ snd (walkRight player)
+			walkRightPlayer = fst (walkRight player)
+			walkBackMessage = "\n" ++ snd (walkBack player)
+			walkBackPlayer = fst (walkBack player)
 

@@ -1,5 +1,5 @@
 import Maze(Key, Door, Object (NoObject, ObjectDoor, ObjectKey, MazeEnd, Hole, Bear, Sword, Flashlight), Maze (NoExit), Player (Winner, Loser),
-	createKey, createDoor, openDoor, addFirstLeft, createPlayer, walkLeft, walkRight, printMaze, addInRight)
+	createKey, createDoor, openDoor, addFirstLeft, createPlayer, walkLeft, walkRight, printMaze, addInRight, addInRightLeft)
 
 --startPlay :: Player
 startPlay = do
@@ -34,17 +34,23 @@ createScenario = do
 
 	-- Create mazes
 	let maze = addFirstLeft NoExit on
-	let maze1 = addFirstLeft maze s
-	let maze2 = addFirstLeft maze1 ok
-	let maze3 = addFirstLeft maze2 b
-	let maze4 = addFirstLeft maze3 s
-	let maze5 = addFirstLeft maze4 f
-	let maze6 = addFirstLeft maze5 b
-	let maze7 = addFirstLeft maze6 ok2
+	let maze1 = addFirstLeft maze on
+	let maze2 = addFirstLeft maze1 on
+	let maze3 = addFirstLeft maze2 ok
+	let maze4 = addFirstLeft maze3 on
+	let maze41 = addFirstLeft maze4 on
+	let maze42 = addFirstLeft maze41 hl
+	let maze5 = addInRight maze42 hl
+	let maze6 = addInRightLeft maze5 b
+	let maze7 = addFirstLeft maze6 f
 	let maze8 = addFirstLeft maze7 on
-	let maze9 = addFirstLeft maze8 od2
-	let maze10 = addFirstLeft maze9 hl
-	addFirstLeft maze10 MazeEnd
+	let maze81 = addFirstLeft maze8 od
+	let maze9 = addFirstLeft maze81 hl
+	let maze10 = addFirstLeft maze9 s
+	let maze11 = addFirstLeft maze10 b
+	let maze12 = addFirstLeft maze11 b
+	let maze13 = addFirstLeft maze12 on
+	addFirstLeft maze13 MazeEnd
 
 data Option = OptionLeft | OptionRight 
 

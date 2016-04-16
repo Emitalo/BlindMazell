@@ -1,5 +1,5 @@
 import Maze(Key, Door, Object (NoObject, ObjectDoor, ObjectKey, MazeEnd), Maze (NoExit), Player (Winner),
-	createKey, createDoor, openDoor, addFirstLeft, createPlayer, walkLeft, walkRight, printMaze)
+	createKey, createDoor, openDoor, addFirstLeft, createPlayer, walkLeft, walkRight, walkBack, printMaze)
 
 --startPlay :: Player
 startPlay = do
@@ -60,10 +60,13 @@ play player = do
 	case op of
 		OptionLeft {}-> putStrLn walkLeftMessage >> play walkLeftPlayer
 		OptionRight {}-> putStrLn walkRightMessage >> play walkRightPlayer	
-		OptionBack {}-> putStrLn "Back"
-		otherwise -> putStrLn "Opcao invalida" >> play player
+		OptionBack {}-> putStrLn walkBackMessage >> play walkBackPlayer
+		otherwise -> putStrLn "\nOpcao invalida" >> play player
 		where 
-			walkLeftMessage = snd (walkLeft player)
+			walkLeftMessage = "\n" ++ snd (walkLeft player)
 			walkLeftPlayer = fst (walkLeft player)
-			walkRightMessage = snd (walkRight player)
+			walkRightMessage = "\n" ++ snd (walkRight player)
 			walkRightPlayer = fst (walkRight player)
+			walkBackMessage = "\n" ++ snd (walkBack player)
+			walkBackPlayer = fst (walkBack player)
+

@@ -1,5 +1,5 @@
 module Maze(Key, Door, Object (NoObject, ObjectDoor, ObjectKey, MazeEnd), Maze (NoExit), Player (Winner),
-	createKey, createDoor, openDoor, addFirstLeft, createPlayer, walkLeft, walkRight, printMaze) where
+	createKey, createDoor, openDoor, addFirstLeft, createPlayer, walkLeft, walkRight, walkBack, printMaze) where
 
 data Key = Null | Key {key :: Integer}
 	deriving (Show, Ord, Eq)
@@ -80,17 +80,17 @@ printMazeAux f NoExit = "\n" ++ identLevel level ++ "|NoExit"
 printMazeAux f maze = ("\n" ++ identLevel level ++ "|" ++ (toString (object maze))) ++ (printMazeAux (father maze) (left maze)) ++ (printMazeAux (father maze) (right maze))
 	where level = getMazeLevel maze
 
-data Player =  Player {name :: String, bag :: [Key], curMaze :: Maze} | Winner
+data Player =  Player {name :: String, bag :: [Key], curMaze :: Maze, moves :: [Maze]} | Winner
 	deriving (Show, Ord, Eq)
 
 createPlayer :: String -> Maze -> Player
-createPlayer name maze = Player name [] maze
+createPlayer name maze = Player name [] maze []
 
 playerHasDoorKey :: Player -> Door -> Bool
 playerHasDoorKey player door 
 	| bag player == []  = False
 	| head(bag player) == doorKey door = True
-	| otherwise = playerHasDoorKey (Player (name player) (tail(bag player)) (curMaze player)) door
+	| otherwise = playerHasDoorKey (Player (name player) (tail(bag player)) (curMaze player) (moves player)) door
 
 addToPlayerBag :: Player -> Key -> [Key]
 addToPlayerBag player key = key : (bag player)
@@ -98,26 +98,43 @@ addToPlayerBag player key = key : (bag player)
 walkLeft :: Player -> (Player, String)
 walkLeft player
 	| leftMaze == NoExit = (player, "Nada a esquerda")
-	| curMazeObj == NoObject = ((Player (name player) (bag player) leftMaze), "Voce foi para a esquerda")
-	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player (objectKey curMazeObj)) leftMaze), "Voce pegou uma chave")
-	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) leftMaze), "Voce abriu a porta e foi para a esquerda")
+	| curMazeObj == NoObject = ((Player (name player) (bag player) leftMaze pMoves), "Voce foi para a esquerda")
+	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player (objectKey curMazeObj)) leftMaze pMoves), "Voce pegou uma chave")
+	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) leftMaze pMoves), "Voce abriu a porta e foi para a esquerda")
 	| isEnd curMazeObj = (Winner, "Você saiu do labirinto! Fim do jogo.")
-	| otherwise = (player, "Tem um porta aqui e voce nao tem a chave dessa porta.")
+	| otherwise = (player, "Tem uma porta aqui e voce nao tem a chave dessa porta.")
 	where 
 		curMazeObj = object (left (curMaze player))
 		leftMaze = left (curMaze player)
+		pMoves = (curMaze player) : (moves player)
 
 walkRight :: Player -> (Player, String)
 walkRight player
 	| rightMaze == NoExit = (player, "Nada a direita")
-	| curMazeObj == NoObject = ((Player (name player) (bag player) rightMaze), "Voce foi para a direita")
-	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player (objectKey curMazeObj)) rightMaze), "Voce pegou uma chave")
-	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) rightMaze), "Voce abriu a porta e foi para a direita")
+	| curMazeObj == NoObject = ((Player (name player) (bag player) rightMaze pMoves), "Voce foi para a direita")
+	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player (objectKey curMazeObj)) rightMaze pMoves), "Voce pegou uma chave")
+	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) rightMaze pMoves), "Voce abriu a porta e foi para a direita")
 	| isEnd curMazeObj = (Winner, "Você saiu do labirinto! Fim do jogo.")
 	| otherwise = (player, "Tem um porta aqui e voce nao tem a chave dessa porta.")
 	where
 		curMazeObj = object (right (curMaze player))
 		rightMaze = right (curMaze player)
+		pMoves = (curMaze player) : (moves player)
+
+previousMaze :: Player -> Maze
+previousMaze player = head (moves player)
+
+walkBack :: Player -> (Player, String)
+walkBack player
+	| moves player == [] = (player, "Voce esta no comeco do labirinto, nao da mais pra voltar!")
+	| otherwise = (backingPlayer, "1, 2, 3 uno passito para tras...")
+	where backingPlayer = (Player (name player) (bag player) (previousMaze player) (tail (moves player)) )
+
+--playerWhereabouts :: Player -> IO ()
+--playerWhereabouts player 
+--	| father(curMaze player) == NoExit = putStrLn "Comeco do Labirinto"
+--	| otherwise = putStrLn ("Voce esta nesse labirinto ...") >> printMaze (father (curMaze player))
+
 --k = creaateKey 5
 --d = createDoor k
 
@@ -153,3 +170,4 @@ walkRight player
 --player1 = walkLeft player
 --player2 = walkRight (fst player1)
 --player3 = walkLeft (fst player2)
+

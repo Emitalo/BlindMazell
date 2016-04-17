@@ -1,30 +1,41 @@
 import Maze(Key, Door, Object (NoObject, ObjectDoor, ObjectKey, MazeEnd, Hole, Bear, Sword, Flashlight), Maze (NoExit), Player (Winner, Loser),
-	addFirstLeft, createScenario, createPlayer, walkLeft, walkRight, walkBack, printMaze, addInRight, addInRightLeft, 
+	addFirstLeft, createPlayer, walkLeft, walkRight, walkBack, printMaze, addInRight, addInRightLeft, 
 	playerHasAFlashlight, showNextSteps, showObjectInNextSteps, isSword, isKey, isDoor, isEnd, isBear, isHole, isFlashlight, deleteFlashlight)
 
 import Objects(Key, Door(doorKey), Object (NoObject, ObjectDoor, objectDoor, ObjectKey, objectKey, MazeEnd, Hole, Bear, Sword, Flashlight),  
 	createKey, createDoor, toString, isSword, isKey, isDoor, isEnd, isBear, isHole, isFlashlight)
 
-maze = createScenario
+import Scenarios(scenario1, scenario2)
+
+maze :: String -> Maze
+maze chosen 
+	| chosen == "1" = scenario1
+	| chosen == "2" = scenario2
+    | otherwise = error "Labirinto inexistente"
 
 startPlay :: IO ()
 startPlay = do
-	print "Ola jogador! Bem-vindo ao Mazell"
-	print "Insira o seu nome"
+	putStrLn "Ola jogador! Bem-vindo ao Mazell"
+	putStrLn "\nInsira o seu nome: "
 	name <- getLine
-	let player = createPlayer name maze
-	play player
-	playAgain player
+	putStrLn "\n Qual labirinto deseja jogar (1 ou 2) ?"
+	chosenMaze <- getLine
+	let mazeToPlay = maze chosenMaze 
+	let player = createPlayer name mazeToPlay
+	putStrLn ("\nLabirinto " ++ (show chosenMaze))
+	putStrLn ("\n\n Vamos lá então, " ++ (show name) ++ "! Bem-vindo ao labirinto, agora saia dele!\n")
+	play player chosenMaze
+	playAgain player chosenMaze
 
-playAgain :: Player -> IO ()
-playAgain player = do
+playAgain :: Player -> String -> IO ()
+playAgain player chosenMaze = do
 	putStrLn "Deseja jogar novamente (Y ou N)?"
 	option <- getLine
 	let op = playAgainOption option
 	case op of
-		PlayAgain -> play player
+		PlayAgain -> play player chosenMaze
 		StopPlay -> putStrLn "\n\nObrigado por jogar BlindMazell! Ate a proxima!\n"
-		otherwise -> putStrLn "\nOpcao invalida (Y ou N)\n" >> playAgain player
+		otherwise -> putStrLn "\nOpcao invalida (Y ou N)\n" >> playAgain player chosenMaze
 
 data Option = OptionLeft {} | OptionRight {} | OptionBack {} | InvalidOption {} | TurnOnFlashlight | PlayAgain | StopPlay
 
@@ -85,10 +96,10 @@ showObjectInRightWithFlashLight player
 		objects = showObjectInNextSteps player
 
 
-play :: Player -> IO()
-play Winner = putStrLn "Este e o labirinto que voce estava jogando:" >> printMaze maze
-play Loser = putStrLn ""
-play player = do
+play :: Player -> String -> IO()
+play Winner chosenMaze = putStrLn "Este e o labirinto que voce estava jogando:" >> printMaze (maze chosenMaze)
+play Loser chosenMaze = putStrLn ""
+play player chosenMaze = do
 	putStrLn "\nComandos:\n"
 	putStrLn "a - andar para a esquerda"
 	putStrLn "d - andar para a direita"
@@ -104,11 +115,11 @@ play player = do
 	let op = createOption option
 	putStrLn "\ESC[2J"
 	case op of
-		OptionLeft {}-> putStrLn walkLeftMessage >> play walkLeftPlayer
-		OptionRight {}-> putStrLn walkRightMessage >> play walkRightPlayer	
-		OptionBack {}-> putStrLn walkBackMessage >> play walkBackPlayer
-		TurnOnFlashlight ->  putStrLn ("\n" ++ objleft) >> putStrLn ("\n" ++ objright) >> play curPlayer
-		otherwise -> putStrLn "\nOpcao invalida" >> play player
+		OptionLeft {}-> putStrLn walkLeftMessage >> play walkLeftPlayer chosenMaze
+		OptionRight {}-> putStrLn walkRightMessage >> play walkRightPlayer chosenMaze
+		OptionBack {}-> putStrLn walkBackMessage >> play walkBackPlayer chosenMaze
+		TurnOnFlashlight ->  putStrLn ("\n" ++ objleft) >> putStrLn ("\n" ++ objright) >> play curPlayer chosenMaze
+		otherwise -> putStrLn "\nOpcao invalida" >> play player chosenMaze
 		where
 			objleft = showObjectInLeftWithFlashLight player
 			objright = showObjectInRightWithFlashLight player

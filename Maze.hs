@@ -1,8 +1,8 @@
 module Maze(Key, Door, Object (NoObject, ObjectDoor, ObjectKey, MazeEnd, Hole, Bear, Sword, Flashlight), Maze (NoExit), Player (Winner, Loser),
-	addFirstLeft, createScenario, createPlayer, walkLeft, walkRight, walkBack, printMaze, addInRight, addInRightLeft, 
+	addFirstLeft, addFirstRight, addFirstRightThenLeft, createPlayer, walkLeft, walkRight, walkBack, printMaze, addInRight, addInRightLeft, 
 	playerHasAFlashlight, showNextSteps, showObjectInNextSteps, isSword, isKey, isDoor, isEnd, isBear, isHole, isFlashlight, deleteFlashlight) where
 
-import Objects(Key, Door(doorKey), Object (NoObject, ObjectDoor, objectDoor, ObjectKey, objectKey, MazeEnd, Hole, Bear, Sword, Flashlight),  
+import Objects(Key(key), Door(doorKey), Object (NoObject, ObjectDoor, objectDoor, ObjectKey, objectKey, MazeEnd, Hole, Bear, Sword, Flashlight),  
 	createKey, createDoor, toString, isSword, isKey, isDoor, isEnd, isBear, isHole, isFlashlight)
 
 data Maze = NoExit | Ambience{ object :: Object, father :: Maze, left :: Maze, right :: Maze } 
@@ -15,6 +15,22 @@ addFirstLeft maze obj
 	| left maze /= NoExit && right maze /= NoExit = Ambience (object maze) (father maze) (addFirstLeft (left maze) obj) (right maze)
 	| right maze == NoExit = Ambience (object maze) (father maze) (left maze) (Ambience obj maze NoExit NoExit)
 	| otherwise = Ambience (object maze) (father maze) (left maze) (addFirstLeft (right maze) obj)
+
+addFirstRight :: Maze -> Object -> Maze
+addFirstRight NoExit obj = Ambience obj NoExit NoExit NoExit
+addFirstRight maze obj
+	| right maze == NoExit = Ambience (object maze) (father maze) (left maze) (Ambience obj maze NoExit NoExit)
+	| right maze /= NoExit && left maze /= NoExit = Ambience (object maze) (father maze) (left maze) (addFirstRight (right maze) obj)
+	| left maze == NoExit = Ambience (object maze) (father maze) (Ambience obj maze NoExit NoExit) (right maze)
+	| otherwise = Ambience (object maze) (father maze) (addFirstRight (left maze) obj) (right maze)
+
+addFirstRightThenLeft :: Maze -> Object -> Maze
+addFirstRightThenLeft NoExit obj = Ambience obj NoExit NoExit NoExit
+addFirstRightThenLeft maze obj
+	| right maze == NoExit = Ambience (object maze) (father maze) (left maze) (Ambience obj maze NoExit NoExit)
+	| right maze /= NoExit && left maze /= NoExit = Ambience (object maze) (father maze) (addFirstRight (left maze) obj) (right maze)
+	| left maze == NoExit = Ambience (object maze) (father maze) (Ambience obj maze NoExit NoExit) (right maze)
+	| otherwise = Ambience (object maze) (father maze) (addFirstRight (left maze) obj) (right maze)
 
 addInRight :: Maze -> Object -> Maze
 addInRight NoExit obj = Ambience obj NoExit NoExit NoExit
@@ -83,7 +99,7 @@ walkLeft :: Player -> (Player, String)
 walkLeft player
 	| leftMaze == NoExit = (player, "Nada a esquerda, volte!")
 	| curMazeObj == NoObject = ((Player (name player) (bag player) leftMaze pMoves), "Voce foi para a esquerda")
-	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player curMazeObj) leftMaze pMoves), "Voce pegou uma chave")
+	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player curMazeObj) leftMaze pMoves), "Voce pegou a chave " ++ (show (key (objectKey curMazeObj))))
 	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) leftMaze pMoves), "Voce abriu a porta e foi para a esquerda")
 	| isHole curMazeObj = (Loser, "Voce caiu em um buraco! Fim do jogo.")
 	| isBear curMazeObj && playerHasASword player = ((Player (name player) (bag player) leftMaze pMoves), "Voce encontrou um urso, mas voce tinha uma espada e o matou, depois voce foi para a esquerda")
@@ -91,7 +107,7 @@ walkLeft player
 	| isFlashlight curMazeObj = ((Player (name player) (addToPlayerBag player (curMazeObj)) leftMaze pMoves), "Voce encontrou uma lanterna. Voce pode usar apenas uma vez para enxergar o que tem nos seus possíveis caminhos. \n Voce pegou a lanterna e foi para a esquerda.")
 	| isSword curMazeObj = ((Player (name player) (addToPlayerBag player (curMazeObj)) leftMaze pMoves), "Voce encontrou uma espada e foi para a esquerda.")
 	| isEnd curMazeObj = (Winner, "Voce saiu do labirinto! Fim do jogo.")
-	| otherwise = (player, "Tem um porta aqui e voce nao tem a chave dessa porta.")
+	| otherwise = (player, "Tem um porta (Porta " ++ (show (key (doorKey ( objectDoor curMazeObj)))) ++ ") aqui e voce nao tem a chave dessa porta.")
 	where 
 		curMazeObj = object (left (curMaze player))
 		leftMaze = left (curMaze player)
@@ -101,7 +117,7 @@ walkRight :: Player -> (Player, String)
 walkRight player
 	| rightMaze == NoExit = (player, "Nada a direita, volte!")
 	| curMazeObj == NoObject = ((Player (name player) (bag player) rightMaze pMoves), "Voce foi para a direita")
-	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player curMazeObj) rightMaze pMoves), "Voce pegou uma chave")
+	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player curMazeObj) rightMaze pMoves), "Voce pegou uma chave"  ++ (show (key (objectKey curMazeObj))))
 	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) rightMaze pMoves), "Voce abriu a porta e foi para a direita")
 	| isEnd curMazeObj = (Winner, "Você saiu do labirinto! Fim do jogo.")
 	| isHole curMazeObj = (Loser, "Voce caiu em um buraco! Fim do jogo.")
@@ -109,7 +125,7 @@ walkRight player
 	| isBear curMazeObj && (not (playerHasASword player)) = (Loser, "Ghrrr!! Voce encontrou um urso, mas voce não tinha uma espada e morreu. Fim do jogo.")
 	| isFlashlight curMazeObj = ((Player (name player) (addToPlayerBag player (curMazeObj)) rightMaze pMoves), "Voce encontrou uma lanterna. Voce pode usar apenas uma vez para enxergar o que tem nos seus possíveis caminhos. \n Voce pegou a lanterna e foi para a direita.")
 	| isSword curMazeObj = ((Player (name player) (addToPlayerBag player (curMazeObj)) rightMaze pMoves), "Voce encontrou uma espada e foi para a direita.")
-	| otherwise = (player, "Tem um porta aqui e voce nao tem a chave dessa porta.")
+	| otherwise = (player, "Tem um porta (Porta " ++ (show (key (doorKey ( objectDoor curMazeObj)))) ++ ") aqui e voce nao tem a chave dessa porta.")
 	where
 		curMazeObj = object (right (curMaze player))
 		rightMaze = right (curMaze player)
@@ -148,43 +164,3 @@ walkBack player
 	| moves player == [] = (player, "Voce esta no comeco do labirinto, nao da mais pra voltar!")
 	| otherwise = (backingPlayer, "Voce voltou")
 	where backingPlayer = (Player (name player) (bag player) (previousMaze player) (tail (moves player)) )
-
-createScenario :: Maze
-createScenario = do
-	
-	-- Create objects
-	let k = createKey 10
-	let k2 = createKey 5
-	let d = createDoor k
-	let d2 = createDoor k2
-
-	let ok = ObjectKey k
-	let ok2 = ObjectKey k2
-	let od = ObjectDoor d
-	let od2 = ObjectDoor d2
-	let on = NoObject
-
-	let hl = Hole
-	let b = Bear
-	let f = Flashlight
-	let s = Sword
-
-	-- Create mazes
-	let maze = addFirstLeft NoExit on
-	let maze1 = addFirstLeft maze on
-	let maze2 = addFirstLeft maze1 on
-	let maze3 = addFirstLeft maze2 ok
-	let maze4 = addFirstLeft maze3 on
-	let maze41 = addFirstLeft maze4 on
-	let maze42 = addFirstLeft maze41 hl
-	let maze5 = addInRight maze42 hl
-	let maze6 = addInRightLeft maze5 b
-	let maze7 = addFirstLeft maze6 f
-	let maze8 = addFirstLeft maze7 on
-	let maze81 = addFirstLeft maze8 od
-	let maze9 = addFirstLeft maze81 hl
-	let maze10 = addFirstLeft maze9 s
-	let maze11 = addFirstLeft maze10 b
-	let maze12 = addFirstLeft maze11 b
-	let maze13 = addFirstLeft maze12 on
-	addFirstLeft maze13 MazeEnd

@@ -13,10 +13,20 @@ startPlay = do
 	print "Insira o seu nome"
 	name <- getLine
 	let player = createPlayer name maze
-	play player 
+	play player
+	playAgain player
 
+playAgain :: Player -> IO ()
+playAgain player = do
+	putStrLn "Deseja jogar novamente (Y ou N)?"
+	option <- getLine
+	let op = playAgainOption option
+	case op of
+		PlayAgain -> play player
+		StopPlay -> putStrLn "\n\nObrigado por jogar BlindMazell! Ate a proxima!\n"
+		otherwise -> putStrLn "\nOpcao invalida (Y ou N)\n" >> playAgain player
 
-data Option = OptionLeft {} | OptionRight {} | OptionBack {} | InvalidOption {} | TurnOnFlashlight
+data Option = OptionLeft {} | OptionRight {} | OptionBack {} | InvalidOption {} | TurnOnFlashlight | PlayAgain | StopPlay
 
 createOption :: String -> Option
 createOption option 
@@ -24,6 +34,12 @@ createOption option
 	| option == "d" || option == "D" = OptionRight
 	| option == "f" || option == "F" = TurnOnFlashlight
 	| option == "s" || option == "S" = OptionBack
+	| otherwise = InvalidOption
+
+playAgainOption :: String -> Option
+playAgainOption option 
+	| option == "y" || option == "Y" = PlayAgain 
+	| option == "n" || option == "N" = StopPlay
 	| otherwise = InvalidOption
 
 getFlashlight :: Player -> Option
@@ -70,7 +86,7 @@ showObjectInRightWithFlashLight player
 
 
 play :: Player -> IO()
-play Winner = putStrLn "Este e o labirinto que voce estava jogando" >> printMaze maze
+play Winner = putStrLn "Este e o labirinto que voce estava jogando:" >> printMaze maze
 play Loser = putStrLn ""
 play player = do
 	putStrLn "\nComandos:\n"

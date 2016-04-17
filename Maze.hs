@@ -102,7 +102,7 @@ walkLeft player
 	| isKey curMazeObj = ((Player (name player) (addToPlayerBag player curMazeObj) leftMaze pMoves), "Voce pegou a chave " ++ (show (key (objectKey curMazeObj))))
 	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) leftMaze pMoves), "Voce abriu a porta e foi para a esquerda")
 	| isHole curMazeObj = (Loser, "Voce caiu em um buraco! Fim do jogo.")
-	| isBear curMazeObj && playerHasASword player = ((Player (name player) (bag player) leftMaze pMoves), "Voce encontrou um urso, mas voce tinha uma espada e o matou, depois voce foi para a esquerda")
+	| isBear curMazeObj && playerHasASword player = ((Player (name player) (bagWithoutSword) leftMaze pMoves), "Voce encontrou um urso, mas voce tinha uma espada e o matou, depois voce foi para a esquerda")
 	| isBear curMazeObj && (not (playerHasASword player)) = (Loser, "Ghrrr!! Voce encontrou um urso, mas voce não tinha uma espada e morreu. Fim do jogo.")
 	| isFlashlight curMazeObj = ((Player (name player) (addToPlayerBag player (curMazeObj)) leftMaze pMoves), "Voce encontrou uma lanterna. Voce pode usar apenas uma vez para enxergar o que tem nos seus possíveis caminhos. \n Voce pegou a lanterna e foi para a esquerda.")
 	| isSword curMazeObj = ((Player (name player) (addToPlayerBag player (curMazeObj)) leftMaze pMoves), "Voce encontrou uma espada e foi para a esquerda.")
@@ -112,6 +112,7 @@ walkLeft player
 		curMazeObj = object (left (curMaze player))
 		leftMaze = left (curMaze player)
 		pMoves = (curMaze player) : (moves player)
+		bagWithoutSword = deleteSwordFromBag player 
 
 walkRight :: Player -> (Player, String)
 walkRight player
@@ -121,7 +122,7 @@ walkRight player
 	| isDoor curMazeObj && playerHasDoorKey player (objectDoor curMazeObj) = ((Player (name player) (bag player) rightMaze pMoves), "Voce abriu a porta e foi para a direita")
 	| isEnd curMazeObj = (Winner, "Você saiu do labirinto! Fim do jogo.")
 	| isHole curMazeObj = (Loser, "Voce caiu em um buraco! Fim do jogo.")
-	| isBear curMazeObj && playerHasASword player = ((Player (name player) (bag player) rightMaze pMoves), "Voce encontrou um urso, mas voce tinha uma espada e o matou, depois voce foi para a direita")
+	| isBear curMazeObj && playerHasASword player = ((Player (name player) (bagWithoutSword) rightMaze pMoves), "Voce encontrou um urso, mas voce tinha uma espada e o matou, depois voce foi para a direita")
 	| isBear curMazeObj && (not (playerHasASword player)) = (Loser, "Ghrrr!! Voce encontrou um urso, mas voce não tinha uma espada e morreu. Fim do jogo.")
 	| isFlashlight curMazeObj = ((Player (name player) (addToPlayerBag player (curMazeObj)) rightMaze pMoves), "Voce encontrou uma lanterna. Voce pode usar apenas uma vez para enxergar o que tem nos seus possíveis caminhos. \n Voce pegou a lanterna e foi para a direita.")
 	| isSword curMazeObj = ((Player (name player) (addToPlayerBag player (curMazeObj)) rightMaze pMoves), "Voce encontrou uma espada e foi para a direita.")
@@ -130,6 +131,7 @@ walkRight player
 		curMazeObj = object (right (curMaze player))
 		rightMaze = right (curMaze player)
 		pMoves = (curMaze player) : (moves player)
+		bagWithoutSword = deleteSwordFromBag player 
 
 showNextSteps :: Player -> (Bool, Bool)
 showNextSteps player
@@ -156,6 +158,14 @@ deleteFlashlight player
 		newBag =  (curObj) : bag (deleteFlashlight (newPlayer))
 		newPlayer = (Player (name player) (tail(bag player)) (curMaze player) (moves player))
 
+deleteSwordFromBag :: Player -> [Object]
+deleteSwordFromBag player 
+	| isSword curObj = newBag
+	| otherwise = curObj : deleteSwordFromBag (Player (name player) (newBag) (curMaze player) (moves player))
+	where
+		curObj = head(bag player)
+		newBag = tail(bag player)
+		
 previousMaze :: Player -> Maze
 previousMaze player = head (moves player)
 

@@ -62,8 +62,8 @@ toString :: Object -> String
 toString object = 
 	case object of
 		NoObject {} -> "Nada aqui"
-		ObjectKey {objectKey} -> "Chave " ++ ( show (key objectKey))
-		ObjectDoor {objectDoor} -> "Porta" ++ (show (doorKey objectDoor))
+		ObjectKey {objectKey = ok} -> "Chave " ++ ( show (key ok))
+		ObjectDoor {objectDoor = od} -> "Porta (chave: " ++ (show (key (doorKey od))) ++")"
 		MazeEnd {} -> "Saida"
 		Hole {} -> "Buraco"
 		Bear {} -> "Urso"

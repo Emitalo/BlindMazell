@@ -1,4 +1,4 @@
-# *BlindMazell* - Labirinto às cegas
+# *BlindMazell - Can you get out?*
 
 O ***BlindMazell*** é um jogo de terminal para passar o tempo. Consiste em um labirinto às cegas, onde você deve escolher em ir para a direita, para esquerda ou voltar para onde estava. O legal é que você não sabe o que te aguarda do outro lado, apenas escolha um lado e cruze os dedos! Você pode jogar o mesmo labirinto quantas vezes quiser, exercitando sua memória e se divertindo.
 
